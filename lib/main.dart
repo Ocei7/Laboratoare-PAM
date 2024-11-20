@@ -1,306 +1,248 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 void main() {
-  runApp(WineShopApp());
+  runApp(BMICalculatorApp());
 }
 
-
-
-class WineShopApp extends StatelessWidget {
+class BMICalculatorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: WineShopScreen(),
-      debugShowCheckedModeBanner: false,
+      home: BMICalculatorScreen(),
     );
   }
 }
 
-
-
-class WineShopScreen extends StatefulWidget {
+class BMICalculatorScreen extends StatefulWidget {
   @override
-  _WineShopScreenState createState() => _WineShopScreenState();
+  _BMICalculatorScreenState createState() => _BMICalculatorScreenState();
 }
 
-class _WineShopScreenState extends State<WineShopScreen> {
-  String selectedCategory = 'Type'; // Categoria selectată inițial
+enum Gender { male, female }
 
-  // Date pentru fiecare categorie și imagini asociate
-  final Map<String, List<Map<String, String>>> wineCategories = {
-    'Type': [
-      {'name': 'Red Wine', 'image': 'assets/redwine.png'},
-      {'name': 'White Wine', 'image': 'assets/redwine.png'},
-      {'name': 'Rose Wine', 'image': 'assets/redwine.png'},
-    ],
-    'Style': [
-      {'name': 'Sparkling Wine', 'image': 'assets/redwine.png'},
-      {'name': 'Light-Bodied White Wine', 'image': 'assets/redwine.png'},
-      {'name': 'Full-Bodied White Wine', 'image': 'assets/redwine.png'},
-    ],
-    'Countries': [
-      {'name': 'Moldova', 'image': 'assets/redwine.png'},
-      {'name': 'France', 'image': 'assets/redwine.png'},
-      {'name': 'Romania', 'image': 'assets/redwine.png'},
-    ],
-    'Grape': [
-      {'name': 'Pinot Noir', 'image': 'assets/redwine.png'},
-      {'name': 'Cabernet Sauvignon', 'image': 'assets/redwine.png'},
-      {'name': 'Chardonnay', 'image': 'assets/redwine.png'},
-    ],
-  };
+class _BMICalculatorScreenState extends State<BMICalculatorScreen> {
+  int weight = 70;
+  int age = 23;
+  double height = 170.0;
+  String bmiResult = '';
+  String bmiCategory = 'Underweight';
+  Gender? selectedGender = Gender.male;
 
-  // Pentru a controla dacă un vin este adăugat la favorite
-  final Map<int, bool> favoriteStatus = {};
 
-  @override
-  void initState() {
-    super.initState();
-    loadWineData();
-  }
-
-  List<Map<String, dynamic>> wineList = []; // Lista de vinuri din JSON
-
-  // Încarcă datele din fișierul JSON
-  Future<void> loadWineData() async {
-    try {
-      final String jsonString = await rootBundle.loadString('assets/v3.json');
-      final Map<String, dynamic> jsonData = json.decode(jsonString);
-
-      setState(() {
-        // Asigurăm că 'carousel' este un List
-        if (jsonData['carousel'] is List) {
-          wineList = List<Map<String, dynamic>>.from(jsonData['carousel']);
-        } else {
-          print('Cheia "carousel" nu este o listă validă.');
-          wineList = [];
-        }
-      });
-    } catch (e) {
-      print('Eroare la încărcarea datelor din JSON: $e');
-    }
+  void calculateBMI() {
+    double bmi = weight / ((height / 100) * (height / 100));
+    setState(() {
+      bmiResult = bmi.toStringAsFixed(1);
+      if (bmi < 18.5) {
+        bmiCategory = 'Underweight';
+      } else if (bmi < 24.9) {
+        bmiCategory = 'Normal';
+      } else if (bmi < 29.9) {
+        bmiCategory = 'Overweight';
+      } else {
+        bmiCategory = 'Obese';
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFE0EAFD),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text('Wine Shop', style: TextStyle(color: Colors.black)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.black),
-            onPressed: () {
-              // Aici poți adăuga funcționalitate pentru notificări
-            },
-          ),
-        ],
+        title: Text('BMI Calculator'),
+        backgroundColor: Color(0xFF3B5998),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // "Shop wines by" title
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Shop wines by',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-          // Bara de căutare
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'Search Wines...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Text(
+                'Welcome 😊\nBMI Calculator',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-          // "Address" Field
-
-          // Horizontal Scroll for categories
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: wineCategories.keys.map((category) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: ChoiceChip(
-                    label: Text(category),
-                    selected: selectedCategory == category,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          // Display the wines for the selected category
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Column(
-                children: [
-                  // Afișarea vinurilor specifice categoriilor
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: wineCategories[selectedCategory]!
-                            .map((wine) => WineCard(
-                          wineName: wine['name']!,
-                          wineImage: wine['image']!,
-                        ))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                  // Lista de vinuri din JSON
-                  ...List.generate(wineList.length, (index) {
-                    final wine = wineList[index];
-                    return WineDetailCard(
-                      wine: wine,
-                      isFavorite: favoriteStatus[index] ?? false,
-                      onFavoriteToggled: () {
-                        setState(() {
-                          favoriteStatus[index] = !(favoriteStatus[index] ?? false);
-                        });
-                      },
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Card simplu pentru vinuri în categorii
-class WineCard extends StatelessWidget {
-  final String wineName;
-  final String wineImage;
-
-  WineCard({required this.wineName, required this.wineImage});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      margin: EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Imaginea vinului
-          Image.asset(
-            wineImage,
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-          ),
-          SizedBox(height: 8),
-          // Numele vinului
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              wineName,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Card detaliat pentru lista de vinuri din JSON
-class WineDetailCard extends StatelessWidget {
-  final Map<String, dynamic> wine;
-  final bool isFavorite;
-  final VoidCallback onFavoriteToggled;
-
-  WineDetailCard({required this.wine, required this.isFavorite, required this.onFavoriteToggled});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Imaginea vinului
-          Image.asset(
-            wine['image'] ?? '',  // Verificăm dacă există cheia 'image'
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
-          SizedBox(width: 16),
-          // Detalii vin
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  wine['name'] ?? 'Unknown',  // Verificăm dacă există cheia 'name'
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                GenderButton(
+                  icon: Icons.male,
+                  label: 'Male',
+                  selected: selectedGender == Gender.male,
+                  onTap: () {
+                    setState(() {
+                      selectedGender = Gender.male;
+                    });
+                  },
                 ),
-                SizedBox(height: 8),
-                Text('${wine['type']} | ${wine['from']['country'] ?? 'Unknown'}'),  // Accesăm corect sub-cheile
-                SizedBox(height: 8),
-                Text('Price: ${wine['price_usd'] ?? 'N/A'} USD'),  // Folosim 'price_usd' din JSON
-                SizedBox(height: 8),
-                Text('Critic\'s Score: ${wine['critic_score'] ?? 'N/A'}'),
-                SizedBox(height: 8),
-                Text('Bottle: ${wine['bottle_size'] ?? 'N/A'}'),
+                SizedBox(width: 16),
+                GenderButton(
+                  icon: Icons.female,
+                  label: 'Female',
+                  selected: selectedGender == Gender.female,
+                  onTap: () {
+                    setState(() {
+                      selectedGender = Gender.female;
+                    });
+                  },
+                ),
               ],
             ),
-          ),
-          // Buton favorite
-          IconButton(
-            icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.red : Colors.grey,
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IncrementCard(
+                  label: 'Weight',
+                  value: weight.toString(),
+                  onIncrement: () {
+                    setState(() {
+                      weight++;
+                    });
+                  },
+                  onDecrement: () {
+                    setState(() {
+                      weight--;
+                    });
+                  },
+                ),
+                IncrementCard(
+                  label: 'Age',
+                  value: age.toString(),
+                  onIncrement: () {
+                    setState(() {
+                      age++;
+                    });
+                  },
+                  onDecrement: () {
+                    setState(() {
+                      age--;
+                    });
+                  },
+                ),
+              ],
             ),
-            onPressed: onFavoriteToggled,
-          ),
-        ],
+            SizedBox(height: 20),
+            Text(
+              'Height',
+              style: TextStyle(fontSize: 18),
+            ),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'Enter height in cm',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                height = double.parse(value);
+              },
+            ),
+            SizedBox(height: 20),
+            Text(
+              '$bmiResult',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            Text(
+              '$bmiCategory',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 24, color: Colors.blue),
+            ),
+            Spacer(),
+            ElevatedButton(
+              onPressed: calculateBMI,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.all(16),
+                backgroundColor: Colors.blue,
+                textStyle: TextStyle(fontSize: 18),
+              ),
+              child: Text("Let's Go"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GenderButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  GenderButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 24),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: selected ? Colors.blue : Colors.grey,
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+      ),
+    );
+  }
+}
+
+class IncrementCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+
+  IncrementCard({
+    required this.label,
+    required this.value,
+    required this.onIncrement,
+    required this.onDecrement,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 18),
+            ),
+            Text(
+              value,
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: onDecrement,
+                  icon: Icon(Icons.remove_circle, size: 32),
+                ),
+                IconButton(
+                  onPressed: onIncrement,
+                  icon: Icon(Icons.add_circle, size: 32),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
