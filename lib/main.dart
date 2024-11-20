@@ -1,12 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   runApp(WineShopApp());
 }
-
-
 
 class WineShopApp extends StatelessWidget {
   @override
@@ -17,8 +13,6 @@ class WineShopApp extends StatelessWidget {
     );
   }
 }
-
-
 
 class WineShopScreen extends StatefulWidget {
   @override
@@ -52,36 +46,57 @@ class _WineShopScreenState extends State<WineShopScreen> {
     ],
   };
 
+  // Datele vinurilor care vor fi afișate mai jos de categorie
+  final List<Map<String, String>> wineList = [
+    {
+      'name': 'Château Margaux',
+      'type': 'Red Wine',
+      'country': 'France',
+      'price': '\$350',
+      'score': '4.8',
+      'bottle': '700ml',
+      'image': 'assets/redwine.png',
+    },
+    {
+      'name': 'Purcari 1827',
+      'type': 'White Wine',
+      'country': 'Moldova',
+      'price': '\$50',
+      'score': '4.5',
+      'bottle': '700ml',
+      'image': 'assets/redwine.png',
+    },
+    {
+      'name': 'Alira Rosé',
+      'type': 'Rosé Wine',
+      'country': 'Romania',
+      'price': '\$30',
+      'score': '4.2',
+      'bottle': '700ml',
+      'image': 'assets/redwine.png',
+    },
+    {
+      'name': 'Champagne Moët',
+      'type': 'Sparkling Wine',
+      'country': 'France',
+      'price': '\$150',
+      'score': '4.7',
+      'bottle': '700ml',
+      'image': 'assets/redwine.png',
+    },
+    {
+      'name': 'Negru de Purcari',
+      'type': 'Red Wine',
+      'country': 'Moldova',
+      'price': '\$80',
+      'score': '4.6',
+      'bottle': '700ml',
+      'image': 'assets/redwine.png',
+    },
+  ];
+
   // Pentru a controla dacă un vin este adăugat la favorite
   final Map<int, bool> favoriteStatus = {};
-
-  @override
-  void initState() {
-    super.initState();
-    loadWineData();
-  }
-
-  List<Map<String, dynamic>> wineList = []; // Lista de vinuri din JSON
-
-  // Încarcă datele din fișierul JSON
-  Future<void> loadWineData() async {
-    try {
-      final String jsonString = await rootBundle.loadString('assets/v3.json');
-      final Map<String, dynamic> jsonData = json.decode(jsonString);
-
-      setState(() {
-        // Asigurăm că 'carousel' este un List
-        if (jsonData['carousel'] is List) {
-          wineList = List<Map<String, dynamic>>.from(jsonData['carousel']);
-        } else {
-          print('Cheia "carousel" nu este o listă validă.');
-          wineList = [];
-        }
-      });
-    } catch (e) {
-      print('Eroare la încărcarea datelor din JSON: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,20 +104,71 @@ class _WineShopScreenState extends State<WineShopScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('Wine Shop', style: TextStyle(color: Colors.black)),
+        title: Text('V2', style: TextStyle(color: Colors.black)),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications, color: Colors.black),
-            onPressed: () {
-              // Aici poți adăuga funcționalitate pentru notificări
-            },
+            icon: Stack(
+              children: [
+                Icon(Icons.notifications_outlined, color: Colors.black),
+                Positioned(
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      '12',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {},
           ),
         ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Location and search bar section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.location_pin, color: Colors.black),
+                    SizedBox(width: 8),
+                    Text(
+                      'Donnerville Drive',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Icon(Icons.keyboard_arrow_down, color: Colors.black),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.black),
+                    SizedBox(width: 8),
+                    Icon(Icons.mic, color: Colors.black),
+                  ],
+                )
+              ],
+            ),
+          ),
           // "Shop wines by" title
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -111,19 +177,6 @@ class _WineShopScreenState extends State<WineShopScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          // Bara de căutare
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'Search Wines...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-          ),
-          // "Address" Field
-
           // Horizontal Scroll for categories
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -165,7 +218,7 @@ class _WineShopScreenState extends State<WineShopScreen> {
                       ),
                     ),
                   ),
-                  // Lista de vinuri din JSON
+                  // Lista de 5 vinuri de mai jos
                   ...List.generate(wineList.length, (index) {
                     final wine = wineList[index];
                     return WineDetailCard(
@@ -177,7 +230,7 @@ class _WineShopScreenState extends State<WineShopScreen> {
                         });
                       },
                     );
-                  }),
+                  })
                 ],
               ),
             ),
@@ -237,9 +290,9 @@ class WineCard extends StatelessWidget {
   }
 }
 
-// Card detaliat pentru lista de vinuri din JSON
+// Card detaliat pentru lista de vinuri de jos
 class WineDetailCard extends StatelessWidget {
-  final Map<String, dynamic> wine;
+  final Map<String, String> wine;
   final bool isFavorite;
   final VoidCallback onFavoriteToggled;
 
@@ -266,7 +319,7 @@ class WineDetailCard extends StatelessWidget {
         children: [
           // Imaginea vinului
           Image.asset(
-            wine['image'] ?? '',  // Verificăm dacă există cheia 'image'
+            wine['image']!,
             width: 100,
             height: 100,
             fit: BoxFit.cover,
@@ -278,21 +331,20 @@ class WineDetailCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  wine['name'] ?? 'Unknown',  // Verificăm dacă există cheia 'name'
+                  wine['name']!,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
-                Text('${wine['type']} | ${wine['from']['country'] ?? 'Unknown'}'),  // Accesăm corect sub-cheile
+                Text('${wine['type']} | ${wine['country']}'),
                 SizedBox(height: 8),
-                Text('Price: ${wine['price_usd'] ?? 'N/A'} USD'),  // Folosim 'price_usd' din JSON
+                Text('Price: ${wine['price']}'),
                 SizedBox(height: 8),
-                Text('Critic\'s Score: ${wine['critic_score'] ?? 'N/A'}'),
-                SizedBox(height: 8),
-                Text('Bottle: ${wine['bottle_size'] ?? 'N/A'}'),
+                Text('Critic\'s Score: ${wine['score']}'),
+                Text('Bottle: ${wine['bottle']}'),
               ],
             ),
           ),
-          // Buton favorite
+          // Iconiță Favorite
           IconButton(
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
